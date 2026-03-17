@@ -77,7 +77,7 @@ Vehicle Booking System (VBS) adalah aplikasi web untuk memonitor dan mengelola p
 
 ```bash
 # Clone dari repository
-git clone https://github.com/your-repo/vehicle-booking-system.git
+git clone https://github.com/Alfahreziii/vehicle-booking-sistem.git
 cd vehicle-booking-system
 ```
 
