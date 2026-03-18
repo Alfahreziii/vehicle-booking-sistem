@@ -12,6 +12,7 @@
 - [Daftar Username & Password](#daftar-username--password)
 - [Panduan Penggunaan](#panduan-penggunaan)
 - [Struktur Project](#struktur-project)
+- [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -21,53 +22,64 @@ Vehicle Booking System (VBS) adalah aplikasi web untuk memonitor dan mengelola p
 
 - Pemesanan kendaraan oleh admin/pool kendaraan
 - Persetujuan berjenjang (minimal 2 level) oleh atasan
-- Monitoring konsumsi BBM dan jadwal servis
-- Dashboard grafik pemakaian kendaraan
-- Laporan periodik yang dapat diekspor ke Excel
+- Monitoring konsumsi BBM dan jadwal servis kendaraan
+- Dashboard grafik pemakaian kendaraan (12 bulan terakhir)
+- Laporan periodik yang dapat diekspor ke Excel dengan formatting
 - Log aktivitas untuk setiap proses di sistem
+- Auto-expire booking yang melewati tanggal keberangkatan tanpa disetujui
 
 ---
 
 ## Teknologi & Versi
 
-| Komponen         | Versi         |
-|------------------|---------------|
-| PHP              | ^8.2          |
-| Laravel          | ^11.0         |
-| MySQL            | ^8.0          |
-| Node.js          | ^18.0         |
-| Tailwind CSS     | ^4.2          |
-| Alpine.js        | ^3.15         |
-| Vite             | ^6.0          |
-| Spatie Permission| ^6.0          |
-| Maatwebsite Excel| ^3.1          |
+| Komponen          | Versi  |
+|-------------------|--------|
+| PHP               | ^8.2   |
+| Laravel           | ^11.0  |
+| MySQL             | ^8.0   |
+| Node.js           | ^18.0  |
+| Tailwind CSS      | ^4.2   |
+| Alpine.js         | ^3.15  |
+| Vite              | ^6.0   |
+| Spatie Permission | ^6.0   |
+| Maatwebsite Excel | ^3.1   |
+| Chart.js          | ^4.4   |
 
 ---
 
 ## Fitur Utama
 
 ### Admin
-- ✅ Manajemen kendaraan (tambah, edit, detail, hapus)
-- ✅ Manajemen driver (tambah, edit, detail, hapus)
+- ✅ Manajemen kendaraan (tambah, edit, detail, hapus soft delete)
+- ✅ Manajemen driver beserta data SIM
 - ✅ Manajemen pengguna & role
 - ✅ Buat pemesanan kendaraan + tentukan driver & approver
-- ✅ Selesaikan & batalkan pemesanan
-- ✅ Catat log pengisian BBM
+- ✅ Pengecekan otomatis konflik waktu kendaraan & driver
+- ✅ Selesaikan booking + input odometer akhir & log BBM sekaligus
+- ✅ Batalkan booking dengan alasan
+- ✅ Catat log pengisian BBM per kendaraan
 - ✅ Dashboard grafik pemakaian kendaraan
-- ✅ Laporan periodik + export Excel
+- ✅ Laporan periodik + export Excel (dengan color coding & formatting)
 
 ### Approver
-- ✅ Melihat daftar pemesanan yang perlu disetujui
+- ✅ Melihat daftar pemesanan yang perlu disetujui (card view)
 - ✅ Proses persetujuan atau penolakan berjenjang (level 1, 2, dst)
-- ✅ Melihat riwayat persetujuan
-- ✅ Notifikasi email & database saat ada booking baru
+- ✅ Melihat riwayat persetujuan dengan status tiap level
+- ✅ Notifikasi email & database saat ada booking menunggu
+
+### Profil
+- ✅ Update nama & email
+- ✅ Ganti password dengan konfirmasi
+- ✅ Hapus akun dengan konfirmasi password
 
 ### Sistem
 - ✅ Persetujuan berjenjang minimal 2 level (maks 5 level)
 - ✅ Notifikasi otomatis ke approver berikutnya setelah level sebelumnya setuju
 - ✅ Activity log di setiap proses (buat booking, setuju, tolak, export, dll)
-- ✅ Cek ketersediaan kendaraan & driver secara otomatis
+- ✅ Cek konflik waktu kendaraan & driver secara otomatis
 - ✅ Soft delete untuk kendaraan & booking
+- ✅ Auto-expire booking via Laravel Scheduler (setiap jam)
+- ✅ Kendaraan di-reserve saat booking dibuat (mencegah double booking)
 
 ---
 
@@ -76,7 +88,6 @@ Vehicle Booking System (VBS) adalah aplikasi web untuk memonitor dan mengelola p
 ### 1. Clone atau ekstrak project
 
 ```bash
-# Clone dari repository
 git clone https://github.com/Alfahreziii/vehicle-booking-sistem.git
 cd vehicle-booking-system
 ```
@@ -106,6 +117,8 @@ Edit file `.env` sesuai konfigurasi lokal:
 
 ```env
 APP_NAME="Vehicle Booking System"
+APP_ENV=local
+APP_DEBUG=true
 APP_URL=http://localhost:8000
 
 DB_CONNECTION=mysql
@@ -116,10 +129,10 @@ DB_USERNAME=root
 DB_PASSWORD=
 
 MAIL_MAILER=smtp
-MAIL_HOST=smtp.mailtrap.io
+MAIL_HOST=sandbox.smtp.mailtrap.io
 MAIL_PORT=2525
-MAIL_USERNAME=your_username
-MAIL_PASSWORD=your_password
+MAIL_USERNAME=your_mailtrap_username
+MAIL_PASSWORD=your_mailtrap_password
 MAIL_FROM_ADDRESS="noreply@vehiclebooking.com"
 MAIL_FROM_NAME="VBS Nikel Mining"
 ```
@@ -154,25 +167,68 @@ php artisan serve
 
 Akses aplikasi di: **http://localhost:8000**
 
+> **Catatan:** Halaman login menampilkan kotak **Akun Demo** yang hanya muncul saat `APP_ENV=local`. Klik salah satu akun untuk mengisi form login secara otomatis.
+
+---
+
+## Menjalankan Scheduler (Auto-Expire Booking)
+
+Sistem memiliki fitur otomatis untuk membatalkan booking yang melewati tanggal keberangkatan tanpa disetujui.
+
+### Di lokal (development)
+
+Jalankan perintah ini di terminal terpisah, tidak perlu setup crontab apapun:
+
+```bash
+php artisan schedule:work
+```
+
+Jalankan bersamaan dengan server dan asset build:
+
+```bash
+# Terminal 1 — Laravel server
+php artisan serve
+
+# Terminal 2 — Vite assets
+npm run dev
+
+# Terminal 3 — Scheduler (opsional)
+php artisan schedule:work
+```
+
+### Di server production
+
+Tambahkan satu baris ini ke crontab server:
+
+```bash
+* * * * * cd /path/to/project && php artisan schedule:run >> /dev/null 2>&1
+```
+
+### Test manual
+
+```bash
+php artisan bookings:expire-stale
+```
+
 ---
 
 ## Konfigurasi Database
 
 ### Struktur Tabel Utama
 
-| Tabel                | Deskripsi                                    |
-|----------------------|----------------------------------------------|
-| `users`              | Data pengguna sistem                         |
-| `regions`            | Data region (kantor pusat, cabang, tambang)  |
-| `departments`        | Data departemen per region                   |
-| `vehicles`           | Data kendaraan (milik & sewa)                |
-| `drivers`            | Data driver beserta data SIM                 |
-| `bookings`           | Data pemesanan kendaraan                     |
-| `booking_approvals`  | Chain persetujuan berjenjang per booking     |
-| `fuel_logs`          | Log pengisian BBM                            |
-| `service_schedules`  | Jadwal servis kendaraan                      |
-| `activity_logs`      | Log seluruh aktivitas sistem                 |
-| `notifications`      | Notifikasi database (Laravel)                |
+| Tabel               | Deskripsi                                   |
+|---------------------|---------------------------------------------|
+| `users`             | Data pengguna sistem                        |
+| `regions`           | Data region (kantor pusat, cabang, tambang) |
+| `departments`       | Data departemen per region                  |
+| `vehicles`          | Data kendaraan (milik & sewa)               |
+| `drivers`           | Data driver beserta data SIM                |
+| `bookings`          | Data pemesanan kendaraan                    |
+| `booking_approvals` | Chain persetujuan berjenjang per booking    |
+| `fuel_logs`         | Log pengisian BBM per kendaraan             |
+| `service_schedules` | Jadwal servis kendaraan                     |
+| `activity_logs`     | Log seluruh aktivitas sistem                |
+| `notifications`     | Notifikasi database (Laravel)               |
 
 ---
 
@@ -182,42 +238,42 @@ Akses aplikasi di: **http://localhost:8000**
 
 ### Admin
 
-| Nama                 | Email                                  | Role  | Lokasi         |
-|----------------------|----------------------------------------|-------|----------------|
-| Super Administrator  | superadmin@nikelmining.co.id           | admin | Kantor Pusat   |
-| Budi Santoso         | admin.pool@nikelmining.co.id           | admin | Kantor Pusat   |
-| Dewi Rahayu          | admin.cabang@nikelmining.co.id         | admin | Kantor Cabang  |
+| Nama                | Email                          | Role  | Lokasi        |
+|---------------------|--------------------------------|-------|---------------|
+| Super Administrator | superadmin@nikelmining.co.id   | admin | Kantor Pusat  |
+| Budi Santoso        | admin.pool@nikelmining.co.id   | admin | Kantor Pusat  |
+| Dewi Rahayu         | admin.cabang@nikelmining.co.id | admin | Kantor Cabang |
 
 ### Approver
 
-| Nama             | Email                                   | Level    | Lokasi                   |
-|------------------|-----------------------------------------|----------|--------------------------|
-| Hendra Wijaya    | kabag.ops@nikelmining.co.id             | Level 1  | Kantor Pusat             |
-| Siti Nurhaliza   | manager.ops@nikelmining.co.id           | Level 2  | Kantor Pusat             |
-| Agus Prayitno    | kabag.morowali1@nikelmining.co.id       | Level 1  | Tambang Morowali 1       |
-| Rini Oktaviani   | kabag.morowali2@nikelmining.co.id       | Level 1  | Tambang Morowali 2       |
-| Joko Widodo      | kabag.konawe@nikelmining.co.id          | Level 1  | Tambang Konawe           |
-| Fitri Handayani  | kabag.halmahera1@nikelmining.co.id      | Level 1  | Tambang Halmahera 1      |
-| Bambang Susanto  | kabag.halmahera2@nikelmining.co.id      | Level 1  | Tambang Halmahera 2      |
-| Yuni Astuti      | kabag.sulbar@nikelmining.co.id          | Level 1  | Tambang Sulawesi Barat   |
+| Nama            | Email                              | Level   | Lokasi                 |
+|-----------------|------------------------------------|---------|------------------------|
+| Hendra Wijaya   | kabag.ops@nikelmining.co.id        | Level 1 | Kantor Pusat           |
+| Siti Nurhaliza  | manager.ops@nikelmining.co.id      | Level 2 | Kantor Pusat           |
+| Agus Prayitno   | kabag.morowali1@nikelmining.co.id  | Level 1 | Tambang Morowali 1     |
+| Rini Oktaviani  | kabag.morowali2@nikelmining.co.id  | Level 1 | Tambang Morowali 2     |
+| Joko Widodo     | kabag.konawe@nikelmining.co.id     | Level 1 | Tambang Konawe         |
+| Fitri Handayani | kabag.halmahera1@nikelmining.co.id | Level 1 | Tambang Halmahera 1    |
+| Bambang Susanto | kabag.halmahera2@nikelmining.co.id | Level 1 | Tambang Halmahera 2    |
+| Yuni Astuti     | kabag.sulbar@nikelmining.co.id     | Level 1 | Tambang Sulawesi Barat |
 
 ### Driver
 
-| Nama             | Email                              | Lokasi         |
-|------------------|------------------------------------|----------------|
-| Wahyu Setiawan   | driver1@nikelmining.co.id          | Kantor Pusat   |
-| Rizky Pratama    | driver2@nikelmining.co.id          | Kantor Pusat   |
-| Eko Saputra      | driver3@nikelmining.co.id          | Kantor Cabang  |
-| Dimas Kurniawan  | driver4@nikelmining.co.id          | Kantor Cabang  |
-| Fajar Nugroho    | driver5@nikelmining.co.id          | Tambang Morowali 1 |
+| Nama            | Email                     | Lokasi             |
+|-----------------|---------------------------|--------------------|
+| Wahyu Setiawan  | driver1@nikelmining.co.id | Kantor Pusat       |
+| Rizky Pratama   | driver2@nikelmining.co.id | Kantor Pusat       |
+| Eko Saputra     | driver3@nikelmining.co.id | Kantor Cabang      |
+| Dimas Kurniawan | driver4@nikelmining.co.id | Kantor Cabang      |
+| Fajar Nugroho   | driver5@nikelmining.co.id | Tambang Morowali 1 |
 
 ### Viewer / Pegawai
 
-| Nama             | Email                                | Lokasi         |
-|------------------|--------------------------------------|----------------|
-| Ahmad Fauzi      | ahmad.fauzi@nikelmining.co.id        | Kantor Pusat   |
-| Bagas Wicaksono  | bagas.w@nikelmining.co.id            | Kantor Pusat   |
-| Citra Lestari    | citra.l@nikelmining.co.id            | Kantor Cabang  |
+| Nama            | Email                         | Lokasi        |
+|-----------------|-------------------------------|---------------|
+| Ahmad Fauzi     | ahmad.fauzi@nikelmining.co.id | Kantor Pusat  |
+| Bagas Wicaksono | bagas.w@nikelmining.co.id     | Kantor Pusat  |
+| Citra Lestari   | citra.l@nikelmining.co.id     | Kantor Cabang |
 
 ---
 
@@ -228,22 +284,26 @@ Akses aplikasi di: **http://localhost:8000**
 ```
 Admin buat booking
        ↓
+Kendaraan & driver di-reserve otomatis (mencegah double booking)
 Sistem kirim notifikasi ke Approver Level 1
        ↓
-Approver Level 1 setuju/tolak
+Approver Level 1 setuju / tolak
        ↓ (jika setuju)
 Sistem kirim notifikasi ke Approver Level 2
        ↓
-Approver Level 2 setuju/tolak
+Approver Level 2 setuju / tolak
        ↓ (jika semua setuju)
 Status booking → "Disetujui"
 Notifikasi dikirim ke pemohon
        ↓
 Kendaraan digunakan
        ↓
-Admin selesaikan booking + input odometer akhir
+Admin selesaikan booking + input odometer akhir (+ BBM opsional)
        ↓
-Status → "Selesai"
+Status → "Selesai", kendaraan & driver dibebaskan
+
+⚠ Jika tidak disetujui sampai tanggal berangkat:
+Scheduler otomatis membatalkan booking setiap jam
 ```
 
 ---
@@ -254,16 +314,19 @@ Status → "Selesai"
 1. Login sebagai admin (contoh: `admin.pool@nikelmining.co.id`)
 2. Klik menu **Pemesanan** di sidebar
 3. Klik tombol **Buat Pemesanan**
-4. Isi form: tujuan, destinasi, tanggal, kendaraan, driver
+4. Isi form: tujuan, destinasi, tanggal berangkat, estimasi kembali, kendaraan, driver
 5. Pilih **minimal 2 approver** secara berurutan (level 1, level 2, dst)
 6. Klik **Kirim Pemesanan**
-7. Sistem akan otomatis mengirim notifikasi ke approver level 1
+7. Sistem otomatis mengirim notifikasi ke approver level 1
+
+> **Catatan:** Kendaraan dan driver yang sudah memiliki booking aktif pada rentang waktu yang sama tidak akan bisa dipilih.
 
 #### Menyelesaikan Booking
-1. Buka halaman detail booking yang statusnya **Disetujui** atau **Sedang Jalan**
+1. Buka halaman detail booking yang statusnya **Disetujui**
 2. Klik tombol **Selesaikan**
 3. Input odometer akhir kendaraan
-4. Klik **Konfirmasi Selesai**
+4. Isi data BBM jika ada pengisian selama perjalanan (opsional)
+5. Klik **Konfirmasi Selesai**
 
 #### Membatalkan Booking
 1. Buka halaman detail booking
@@ -271,17 +334,21 @@ Status → "Selesai"
 3. Isi alasan pembatalan (minimal 10 karakter)
 4. Klik **Ya, Batalkan**
 
+> Kendaraan dan driver otomatis dibebaskan saat booking dibatalkan.
+
 #### Export Laporan Excel
 1. Klik menu **Laporan** di sidebar
 2. Atur filter: tanggal mulai, tanggal akhir, status, region
 3. Klik **Tampilkan** untuk preview data
 4. Klik **Export Excel** untuk mengunduh file `.xlsx`
 
+File Excel yang dihasilkan mencakup: judul laporan, header berwarna biru navy, alternating row color, kolom status berwarna sesuai kondisi, dan format Rupiah otomatis untuk kolom biaya BBM.
+
 #### Tambah Log BBM
 1. Buka menu **Kendaraan**
 2. Klik detail kendaraan yang ingin dicatat
 3. Klik tombol **Tambah BBM**
-4. Isi form: tanggal, jumlah liter, harga/liter, odometer, SPBU
+4. Isi form: tanggal, jumlah liter, harga/liter, odometer sebelum & sesudah, SPBU
 5. Klik **Simpan Log BBM**
 
 ---
@@ -290,28 +357,53 @@ Status → "Selesai"
 
 #### Memproses Persetujuan
 1. Login sebagai approver (contoh: `kabag.ops@nikelmining.co.id`)
-2. Lihat notifikasi di navbar atau klik menu **Persetujuan**
+2. Lihat badge merah di menu **Persetujuan** atau notifikasi di navbar
 3. Klik **Proses Sekarang** pada booking yang menunggu
 4. Review detail perjalanan, kendaraan, dan driver
 5. Pilih **Setujui** atau **Tolak**
-6. Isi catatan (wajib jika menolak)
+6. Isi catatan (wajib jika menolak, minimal 10 karakter)
 7. Klik **Konfirmasi**
 
-> **Catatan**: Approver hanya bisa memproses booking sesuai level-nya. Level 2 tidak bisa memproses sebelum Level 1 menyetujui.
+> **Catatan:** Approver hanya bisa memproses booking sesuai level-nya. Level 2 tidak dapat memproses sebelum Level 1 menyetujui.
+
+---
+
+### Panduan Profil
+
+1. Klik nama pengguna di pojok kanan atas navbar
+2. Pilih **Profil Saya**
+3. Tersedia tiga aksi:
+   - **Update nama & email** — simpan perubahan informasi dasar
+   - **Ganti password** — masukkan password lama dan password baru
+   - **Hapus akun** — konfirmasi dengan memasukkan password
 
 ---
 
 ### Status Booking
 
-| Status        | Deskripsi                                      |
-|---------------|------------------------------------------------|
-| `Menunggu`    | Baru dibuat, menunggu approval level 1         |
-| `Direview`    | Sedang dalam proses persetujuan berjenjang     |
-| `Disetujui`   | Semua level sudah menyetujui                   |
-| `Ditolak`     | Salah satu level menolak                       |
-| `Sedang Jalan`| Kendaraan sedang digunakan                    |
-| `Selesai`     | Kendaraan sudah dikembalikan                   |
-| `Dibatalkan`  | Dibatalkan oleh admin                          |
+| Status         | Deskripsi                                              |
+|----------------|--------------------------------------------------------|
+| `Menunggu`     | Baru dibuat, menunggu approval level 1                 |
+| `Direview`     | Sedang dalam proses persetujuan berjenjang             |
+| `Disetujui`    | Semua level sudah menyetujui                           |
+| `Ditolak`      | Salah satu level menolak                               |
+| `Sedang Jalan` | Kendaraan sedang digunakan                             |
+| `Selesai`      | Kendaraan sudah dikembalikan, odometer sudah diisi     |
+| `Dibatalkan`   | Dibatalkan admin atau otomatis expire oleh sistem      |
+
+---
+
+### Cara Kerja BBM
+
+Sistem mencatat konsumsi BBM melalui dua jalur:
+
+**1. Manual via halaman Kendaraan**
+Untuk pengisian BBM rutin yang tidak terkait perjalanan tertentu. Admin membuka detail kendaraan → klik Tambah BBM → isi form.
+
+**2. Saat menyelesaikan booking**
+Saat admin menyelesaikan booking, tersedia form opsional untuk mencatat BBM yang digunakan selama perjalanan. Data ini otomatis tersimpan di `fuel_logs` dan terhubung ke booking tersebut.
+
+Semua log BBM bisa dilihat di halaman detail kendaraan, lengkap dengan efisiensi (km/liter) per pengisian.
 
 ---
 
@@ -321,6 +413,9 @@ Status → "Selesai"
 vehicle-booking-system/
 │
 ├── app/
+│   ├── Console/
+│   │   └── Commands/
+│   │       └── ExpireStaleBookings.php
 │   ├── Http/
 │   │   ├── Controllers/
 │   │   │   ├── Admin/
@@ -331,20 +426,20 @@ vehicle-booking-system/
 │   │   │   │   └── ReportController.php
 │   │   │   ├── Approver/
 │   │   │   │   └── ApprovalController.php
-│   │   │   └── DashboardController.php
+│   │   │   ├── Auth/
+│   │   │   │   └── PasswordController.php
+│   │   │   ├── DashboardController.php
+│   │   │   └── ProfileController.php
 │   │   └── Requests/
 │   │       ├── StoreBookingRequest.php
-│   │       └── UpdateApprovalRequest.php
+│   │       ├── UpdateApprovalRequest.php
+│   │       └── Auth/
+│   │           └── UpdatePasswordRequest.php
 │   ├── Models/
-│   │   ├── User.php
-│   │   ├── Region.php
-│   │   ├── Department.php
-│   │   ├── Vehicle.php
-│   │   ├── Driver.php
-│   │   ├── Booking.php
-│   │   ├── BookingApproval.php
-│   │   ├── FuelLog.php
-│   │   ├── ServiceSchedule.php
+│   │   ├── User.php, Region.php, Department.php
+│   │   ├── Vehicle.php, Driver.php
+│   │   ├── Booking.php, BookingApproval.php
+│   │   ├── FuelLog.php, ServiceSchedule.php
 │   │   └── ActivityLog.php
 │   ├── Services/
 │   │   ├── BookingService.php
@@ -359,40 +454,32 @@ vehicle-booking-system/
 │       └── BookingRejectedNotification.php
 │
 ├── database/
-│   ├── migrations/          (10 file migration)
-│   └── seeders/
-│       ├── DatabaseSeeder.php
-│       ├── RolePermissionSeeder.php
-│       ├── RegionSeeder.php
-│       ├── UserSeeder.php
-│       ├── VehicleSeeder.php
-│       ├── DriverSeeder.php
-│       └── BookingSeeder.php
+│   ├── migrations/          (11 file migration)
+│   └── seeders/             (7 seeder)
 │
 ├── resources/
 │   └── views/
-│       ├── layouts/
-│       │   ├── app.blade.php
-│       │   ├── sidebar.blade.php
-│       │   └── navbar.blade.php
+│       ├── auth/            (login, register, forgot-password)
+│       ├── layouts/         (app, sidebar, navbar)
 │       ├── admin/
 │       │   ├── bookings/    (index, create, show)
 │       │   ├── vehicles/    (index, create, edit, show)
 │       │   ├── drivers/     (index, create, edit, show)
-│       │   ├── users/       (index, create, edit)
+│       │   ├── users/       (index, create, edit, show)
 │       │   └── reports/     (index)
 │       ├── approver/
 │       │   └── approvals/   (index, show)
+│       ├── profile/
+│       │   └── edit.blade.php
 │       └── dashboard.blade.php
 │
 ├── routes/
-│   └── web.php
+│   ├── web.php
+│   ├── auth.php
+│   └── console.php          (jadwal scheduler)
 │
-├── .env.example
-├── composer.json
-├── package.json
-├── vite.config.js
-└── README.md
+└── bootstrap/
+    └── app.php              (middleware Spatie didaftarkan di sini)
 ```
 
 ---
@@ -403,7 +490,8 @@ vehicle-booking-system/
 Pastikan middleware Spatie sudah didaftarkan di `bootstrap/app.php`:
 ```php
 $middleware->alias([
-    'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
+    'role'       => \Spatie\Permission\Middleware\RoleMiddleware::class,
+    'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
 ]);
 ```
 
@@ -415,9 +503,39 @@ php artisan config:clear
 ```
 
 ### Tailwind CSS tidak muncul
-Pastikan tidak ada file `postcss.config.js` atau sudah dikosongkan, lalu jalankan ulang:
+Pastikan tidak ada `postcss.config.js` atau sudah dikosongkan, lalu jalankan ulang:
 ```bash
 npm run dev
+```
+
+> **Catatan:** Tailwind v4 menggunakan `@tailwindcss/vite` dan tidak memerlukan `tailwind.config.js` maupun `postcss.config.js`. Cukup `@import "tailwindcss"` di `app.css`.
+
+### Pagination tidak memakai Tailwind
+Tambahkan di `AppServiceProvider.php`:
+```php
+use Illuminate\Pagination\Paginator;
+
+public function boot(): void
+{
+    Paginator::useTailwind();
+    \Carbon\Carbon::setLocale('id');
+}
+```
+
+### Notifikasi email tidak terkirim
+Pastikan konfigurasi mail di `.env` sudah benar. Untuk testing lokal gunakan Mailtrap:
+```env
+MAIL_MAILER=smtp
+MAIL_HOST=sandbox.smtp.mailtrap.io
+MAIL_PORT=2525
+MAIL_USERNAME=your_mailtrap_username
+MAIL_PASSWORD=your_mailtrap_password
+```
+
+### Scheduler tidak berjalan di lokal
+Jalankan di terminal terpisah (tidak perlu setup crontab):
+```bash
+php artisan schedule:work
 ```
 
 ### Reset database

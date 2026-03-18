@@ -75,11 +75,23 @@ class BookingController extends Controller
     public function complete(Request $request, Booking $booking)
     {
         $request->validate([
-            'odometer_end' => ['required', 'integer', 'min:' . ($booking->odometer_start ?? 0)],
+            'odometer_end'        => ['required', 'integer', 'min:' . ($booking->odometer_start ?? 0)],
+            'fuel_liters'         => ['nullable', 'numeric', 'min:0.1'],
+            'fuel_cost_per_liter' => [
+                'nullable',
+                'numeric',
+                'min:0',
+                'required_with:fuel_liters'
+            ],
         ]);
 
         try {
-            $this->bookingService->complete($booking, $request->odometer_end);
+            $this->bookingService->complete(
+                $booking,
+                $request->odometer_end,
+                // Data BBM opsional
+                $request->only(['fuel_liters', 'fuel_cost_per_liter'])
+            );
 
             return back()->with('success', 'Booking berhasil diselesaikan.');
         } catch (\Exception $e) {

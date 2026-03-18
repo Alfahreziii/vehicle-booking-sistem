@@ -544,42 +544,44 @@
         </div>
     </div>
 
-    {{-- ── Modal Complete ── --}}
-    <div id="modal-complete" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-        <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
-            <h3 class="text-base font-semibold text-slate-800 mb-1">Selesaikan Perjalanan</h3>
-            <p class="text-sm text-slate-500 mb-4">Masukkan odometer akhir untuk menyelesaikan booking ini.</p>
+    {{-- Modal Complete --}}
+    <form action="{{ route('admin.bookings.complete', $booking) }}" method="POST">
+        @csrf
 
-            <form action="{{ route('admin.bookings.complete', $booking) }}" method="POST">
-                @csrf
-                <div class="mb-4">
-                    <label class="block text-xs font-medium text-slate-600 mb-1.5">
-                        Odometer Akhir (km)
-                        @if ($booking->odometer_start)
-                            <span class="text-slate-400 font-normal">— min. {{ number_format($booking->odometer_start) }}
-                                km</span>
-                        @endif
-                    </label>
-                    <input type="number" name="odometer_end" min="{{ $booking->odometer_start ?? 0 }}"
-                        placeholder="{{ $booking->odometer_start ? 'Min: ' . $booking->odometer_start : 'Masukkan odometer...' }}"
-                        class="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 @error('odometer_end') border-red-400 @enderror">
-                    @error('odometer_end')
-                        <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
-                    @enderror
-                </div>
-                <div class="flex gap-2 justify-end">
-                    <button type="button" onclick="document.getElementById('modal-complete').classList.add('hidden')"
-                        class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">
-                        Batal
-                    </button>
-                    <button type="submit"
-                        class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700">
-                        Konfirmasi Selesai
-                    </button>
-                </div>
-            </form>
+        <div class="mb-3">
+            <label class="block text-xs font-semibold text-slate-600 mb-1.5">
+                Odometer Akhir (km) <span class="text-red-500">*</span>
+            </label>
+            <input type="number" name="odometer_end" min="{{ $booking->odometer_start ?? 0 }}"
+                class="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm focus:border-blue-400 focus:outline-none">
         </div>
-    </div>
+
+        {{-- Tambahan BBM (opsional) --}}
+        <div class="rounded-lg border border-slate-100 bg-slate-50 p-3 space-y-3 mb-4">
+            <p class="text-xs font-semibold text-slate-600">Catat BBM (opsional)</p>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs text-slate-500 mb-1">Jumlah (liter)</label>
+                    <input type="number" name="fuel_liters" min="0" step="0.1"
+                        class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-blue-400 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-500 mb-1">Harga/liter (Rp)</label>
+                    <input type="number" name="fuel_cost_per_liter" min="0"
+                        class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-blue-400 focus:outline-none">
+                </div>
+            </div>
+        </div>
+
+        <div class="flex gap-2 justify-end">
+            <button type="button" onclick="document.getElementById('modal-complete').classList.add('hidden')"
+                class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600">Batal</button>
+            <button type="submit"
+                class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700">
+                Konfirmasi Selesai
+            </button>
+        </div>
+    </form>
 
     {{-- ── Modal Cancel ── --}}
     <div id="modal-cancel" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">

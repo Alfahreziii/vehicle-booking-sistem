@@ -111,26 +111,41 @@ class BookingService
     /**
      * Admin update odometer & selesaikan booking
      */
-    public function complete(Booking $booking, int $odometerEnd): Booking
+    public function complete(Booking $booking, int $odometerEnd, array $fuelData = []): Booking
     {
-        return DB::transaction(function () use ($booking, $odometerEnd) {
+        return DB::transaction(function () use ($booking, $odometerEnd, $fuelData) {
 
             $booking->update([
-                'status'        => 'completed',
-                'odometer_end'  => $odometerEnd,
+                'status'       => 'completed',
+                'odometer_end' => $odometerEnd,
             ]);
 
-            // Bebaskan kendaraan & driver
-            $booking->vehicle->update([
-                'status'            => 'available',
-                'current_odometer'  => $odometerEnd,
+            $vehicle = $booking->vehicle()->first();
+            $vehicle?->update([
+                'status'           => 'available',
+                'current_odometer' => $odometerEnd,
             ]);
-            $booking->driver->update(['status' => 'available']);
+            $booking->driver()->first()?->update(['status' => 'available']);
+
+            // Simpan fuel log jika data BBM diisi
+            if (!empty($fuelData['fuel_liters']) && !empty($fuelData['fuel_cost_per_liter'])) {
+                \App\Models\FuelLog::create([
+                    'booking_id'      => $booking->id,
+                    'vehicle_id'      => $booking->vehicle_id,
+                    'filled_by'       => Auth::id(),
+                    'liters'          => $fuelData['fuel_liters'],
+                    'cost_per_liter'  => $fuelData['fuel_cost_per_liter'],
+                    'total_cost'      => $fuelData['fuel_liters'] * $fuelData['fuel_cost_per_liter'],
+                    'odometer_before' => $booking->odometer_start ?? $vehicle?->current_odometer ?? 0,
+                    'odometer_after'  => $odometerEnd,
+                    'log_date'        => now()->toDateString(),
+                ]);
+            }
 
             $this->activityLogService->log(
                 action: 'completed',
                 subject: $booking,
-                description: "Booking {$booking->booking_code} selesai. Odometer akhir: {$odometerEnd} km.",
+                description: "Booking {$booking->booking_code} selesai. Odometer: {$odometerEnd} km.",
             );
 
             return $booking->fresh();
