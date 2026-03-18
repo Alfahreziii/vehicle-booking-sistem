@@ -145,8 +145,16 @@ CREATE DATABASE vehicle_booking_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode
 
 ### 7. Jalankan migration & seeder
 
+Seeder hanya mengisi **data master** (role, region, user, kendaraan, driver). Data booking diisi manual melalui aplikasi.
+
 ```bash
 php artisan migrate --seed
+```
+
+Jika ingin menambahkan data dummy booking untuk keperluan testing:
+
+```bash
+php artisan db:seed --class=BookingSeeder
 ```
 
 ### 8. Build assets
@@ -167,7 +175,7 @@ php artisan serve
 
 Akses aplikasi di: **http://localhost:8000**
 
-> **Catatan:** Halaman login menampilkan kotak **Akun Demo** yang hanya muncul saat `APP_ENV=local`. Klik salah satu akun untuk mengisi form login secara otomatis.
+> **Catatan:** Halaman login menampilkan kotak **Akun Demo** yang hanya muncul saat `APP_ENV=local`. Klik salah satu akun untuk mengisi form login secara otomatis. Tidak ada verifikasi email — login langsung masuk ke dashboard.
 
 ---
 
@@ -177,7 +185,7 @@ Sistem memiliki fitur otomatis untuk membatalkan booking yang melewati tanggal k
 
 ### Di lokal (development)
 
-Jalankan perintah ini di terminal terpisah, tidak perlu setup crontab apapun:
+Jalankan perintah ini di terminal terpisah — tidak perlu setup crontab apapun:
 
 ```bash
 php artisan schedule:work
@@ -230,11 +238,24 @@ php artisan bookings:expire-stale
 | `activity_logs`     | Log seluruh aktivitas sistem                |
 | `notifications`     | Notifikasi database (Laravel)               |
 
+### Data yang Diisi Seeder
+
+| Seeder                 | Data yang Dibuat                                      |
+|------------------------|-------------------------------------------------------|
+| `RolePermissionSeeder` | 4 role (admin, approver, driver, viewer), 21 permission |
+| `RegionSeeder`         | 8 region, 64 department (8 dept × 8 region)           |
+| `UserSeeder`           | 3 admin, 8 approver, 10 driver, 5 viewer              |
+| `VehicleSeeder`        | 20 kendaraan tersebar di semua region                 |
+| `DriverSeeder`         | 10 driver dengan data SIM                             |
+| `BookingSeeder`        | 5 booking dummy *(opsional, tidak dijalankan otomatis)* |
+
 ---
 
 ## Daftar Username & Password
 
 > **Semua akun menggunakan password: `password`**
+>
+> Tidak ada verifikasi email. Login langsung aktif setelah seeder dijalankan.
 
 ### Admin
 
@@ -259,21 +280,28 @@ php artisan bookings:expire-stale
 
 ### Driver
 
-| Nama            | Email                     | Lokasi             |
-|-----------------|---------------------------|--------------------|
-| Wahyu Setiawan  | driver1@nikelmining.co.id | Kantor Pusat       |
-| Rizky Pratama   | driver2@nikelmining.co.id | Kantor Pusat       |
-| Eko Saputra     | driver3@nikelmining.co.id | Kantor Cabang      |
-| Dimas Kurniawan | driver4@nikelmining.co.id | Kantor Cabang      |
-| Fajar Nugroho   | driver5@nikelmining.co.id | Tambang Morowali 1 |
+| Nama            | Email                      | Lokasi             |
+|-----------------|----------------------------|--------------------|
+| Wahyu Setiawan  | driver1@nikelmining.co.id  | Kantor Pusat       |
+| Rizky Pratama   | driver2@nikelmining.co.id  | Kantor Pusat       |
+| Eko Saputra     | driver3@nikelmining.co.id  | Kantor Cabang      |
+| Dimas Kurniawan | driver4@nikelmining.co.id  | Kantor Cabang      |
+| Fajar Nugroho   | driver5@nikelmining.co.id  | Tambang Morowali 1 |
+| Hadi Subroto    | driver6@nikelmining.co.id  | Tambang Morowali 1 |
+| Irwan Kusuma    | driver7@nikelmining.co.id  | Tambang Morowali 2 |
+| Lutfi Hakim     | driver8@nikelmining.co.id  | Tambang Konawe     |
+| Muhamad Ridwan  | driver9@nikelmining.co.id  | Tambang Halmahera 1|
+| Nanang Hidayat  | driver10@nikelmining.co.id | Tambang Halmahera 2|
 
 ### Viewer / Pegawai
 
-| Nama            | Email                         | Lokasi        |
-|-----------------|-------------------------------|---------------|
-| Ahmad Fauzi     | ahmad.fauzi@nikelmining.co.id | Kantor Pusat  |
-| Bagas Wicaksono | bagas.w@nikelmining.co.id     | Kantor Pusat  |
-| Citra Lestari   | citra.l@nikelmining.co.id     | Kantor Cabang |
+| Nama            | Email                         | Lokasi             |
+|-----------------|-------------------------------|--------------------|
+| Ahmad Fauzi     | ahmad.fauzi@nikelmining.co.id | Kantor Pusat       |
+| Bagas Wicaksono | bagas.w@nikelmining.co.id     | Kantor Pusat       |
+| Citra Lestari   | citra.l@nikelmining.co.id     | Kantor Cabang      |
+| Doni Setiawan   | doni.s@nikelmining.co.id      | Tambang Morowali 1 |
+| Eka Putri       | eka.p@nikelmining.co.id       | Tambang Morowali 2 |
 
 ---
 
@@ -341,8 +369,6 @@ Scheduler otomatis membatalkan booking setiap jam
 2. Atur filter: tanggal mulai, tanggal akhir, status, region
 3. Klik **Tampilkan** untuk preview data
 4. Klik **Export Excel** untuk mengunduh file `.xlsx`
-
-File Excel yang dihasilkan mencakup: judul laporan, header berwarna biru navy, alternating row color, kolom status berwarna sesuai kondisi, dan format Rupiah otomatis untuk kolom biaya BBM.
 
 #### Tambah Log BBM
 1. Buka menu **Kendaraan**
@@ -455,7 +481,14 @@ vehicle-booking-system/
 │
 ├── database/
 │   ├── migrations/          (11 file migration)
-│   └── seeders/             (7 seeder)
+│   └── seeders/
+│       ├── DatabaseSeeder.php        (master data saja)
+│       ├── RolePermissionSeeder.php
+│       ├── RegionSeeder.php
+│       ├── UserSeeder.php
+│       ├── VehicleSeeder.php
+│       ├── DriverSeeder.php
+│       └── BookingSeeder.php         (opsional, untuk dummy data)
 │
 ├── resources/
 │   └── views/
@@ -510,18 +543,6 @@ npm run dev
 
 > **Catatan:** Tailwind v4 menggunakan `@tailwindcss/vite` dan tidak memerlukan `tailwind.config.js` maupun `postcss.config.js`. Cukup `@import "tailwindcss"` di `app.css`.
 
-### Pagination tidak memakai Tailwind
-Tambahkan di `AppServiceProvider.php`:
-```php
-use Illuminate\Pagination\Paginator;
-
-public function boot(): void
-{
-    Paginator::useTailwind();
-    \Carbon\Carbon::setLocale('id');
-}
-```
-
 ### Notifikasi email tidak terkirim
 Pastikan konfigurasi mail di `.env` sudah benar. Untuk testing lokal gunakan Mailtrap:
 ```env
@@ -533,7 +554,7 @@ MAIL_PASSWORD=your_mailtrap_password
 ```
 
 ### Scheduler tidak berjalan di lokal
-Jalankan di terminal terpisah (tidak perlu setup crontab):
+Jalankan di terminal terpisah — tidak perlu setup crontab:
 ```bash
 php artisan schedule:work
 ```

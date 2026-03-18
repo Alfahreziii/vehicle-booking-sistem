@@ -21,7 +21,7 @@ Schedule::command('bookings:expire-stale')->hourly();
 // Redirect root ke dashboard
 Route::get('/', fn() => redirect()->route('dashboard'));
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth'])->group(function () {
 
     // ── Notifikasi ────────────────────────────────────────
     Route::post('/notifications/read-all', function () {

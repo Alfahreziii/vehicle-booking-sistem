@@ -133,19 +133,6 @@
                             <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
                         @enderror
 
-                        @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && !$user->hasVerifiedEmail())
-                            <div class="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
-                                <p class="text-xs text-amber-700">
-                                    Email Anda belum diverifikasi.
-                                <form method="POST" action="{{ route('verification.send') }}" class="inline">
-                                    @csrf
-                                    <button type="submit" class="underline hover:no-underline font-medium">
-                                        Kirim ulang email verifikasi
-                                    </button>
-                                </form>
-                                </p>
-                            </div>
-                        @endif
                     </div>
 
                     <div class="flex items-center gap-3 pt-2">

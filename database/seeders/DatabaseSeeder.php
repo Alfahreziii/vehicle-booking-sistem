@@ -14,7 +14,7 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,            // 3. User (butuh region & role)
             VehicleSeeder::class,         // 4. Kendaraan (butuh region)
             DriverSeeder::class,          // 5. Driver (butuh user)
-            BookingSeeder::class,         // 6. Booking contoh (butuh semua)
+            // BookingSeeder::class,      // 6. Booking contoh (butuh semua) BookingSeeder tidak dijalankan — data booking diisi manual
         ]);
     }
 }

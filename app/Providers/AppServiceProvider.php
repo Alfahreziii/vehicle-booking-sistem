@@ -7,6 +7,7 @@ use App\Services\BookingService;
 use App\Services\NotificationService;
 use App\Services\ActivityLogService;
 use App\Services\ApprovalService;
+use Illuminate\Pagination\Paginator;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -32,5 +33,7 @@ class AppServiceProvider extends ServiceProvider
     {
         \Carbon\Carbon::setLocale('id');
         \Illuminate\Support\Facades\Date::setLocale('id');
+
+        Paginator::useTailwind();
     }
 }
