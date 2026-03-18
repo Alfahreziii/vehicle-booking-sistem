@@ -45,12 +45,14 @@ class DashboardController extends Controller
             ->get();
 
         // ── Pending approvals (untuk approver) ────────────
-        $pendingApprovals = 0;
-        if ($user->hasRole(['approver', 'admin'])) {
-            $pendingApprovals = BookingApproval::where('approver_id', $user->id)
-                ->where('status', 'waiting')
-                ->count();
-        }
+        $pendingApprovals = BookingApproval::where('approver_id', $user->id)
+            ->where('status', 'waiting')
+            ->whereHas(
+                'booking',
+                fn($q) =>
+                $q->whereIn('status', ['pending', 'in_review'])
+            )
+            ->count();
 
         // ── Kendaraan yang perlu servis ───────────────────
         $vehiclesDueService = Vehicle::where('is_active', true)

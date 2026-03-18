@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Approver\ApprovalController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Driver\DriverBookingController;
 
 // Auth routes (dari Breeze)
 require __DIR__ . '/auth.php';
@@ -62,10 +63,6 @@ Route::middleware(['auth'])->group(function () {
             Route::get('users/departments', [UserController::class, 'getDepartments'])
                 ->name('users.departments');             // ✅ nama jadi admin.users.departments
             Route::resource('users', UserController::class);
-
-            // Reports
-            Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
-            Route::get('reports/export', [ReportController::class, 'export'])->name('reports.export');
         });
 
     // ── Approver routes ───────────────────────────────────
@@ -76,5 +73,23 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/',                   [ApprovalController::class, 'index'])->name('index');
             Route::get('/{booking}',          [ApprovalController::class, 'show'])->name('show');
             Route::post('/{booking}/process', [ApprovalController::class, 'process'])->name('process');
+        });
+
+    // ── Laporan routes ─────────────────────────────────────
+    Route::middleware(['role:admin|viewer'])
+        ->prefix('admin')
+        ->name('admin.')
+        ->group(function () {
+            Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
+            Route::get('reports/export', [ReportController::class, 'export'])->name('reports.export');
+        });
+
+    // ── Driver routes ─────────────────────────────────────
+    Route::middleware(['role:driver'])
+        ->prefix('driver')
+        ->name('driver.')
+        ->group(function () {
+            Route::get('bookings',          [DriverBookingController::class, 'index'])->name('bookings.index');
+            Route::get('bookings/{booking}', [DriverBookingController::class, 'show'])->name('bookings.show');
         });
 });

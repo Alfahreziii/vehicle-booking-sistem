@@ -43,6 +43,7 @@ class BookingService
                 'departure_at'           => $data['departure_at'],
                 'return_at'              => $data['return_at'],
                 'status'                 => 'in_review',
+                'odometer_start' => Vehicle::find($data['vehicle_id'])->current_odometer,
                 'total_approver_levels'  => count($data['approvers']),
                 'current_approval_level' => 0,
             ]);

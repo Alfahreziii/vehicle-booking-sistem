@@ -90,6 +90,13 @@
                     'badge' => true,
                 ],
                 [
+                    'label' => 'Penugasan Saya',
+                    'route' => 'driver.bookings.index',
+                    'icon' =>
+                        'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2',
+                    'roles' => ['driver'],
+                ],
+                [
                     'label' => 'Kendaraan',
                     'route' => 'admin.vehicles.index',
                     'icon' => 'M8 17a2 2 0 100-4 2 2 0 000 4zm8 0a2 2 0 100-4 2 2 0 000 4zM3 5h2l2 7h9l2-6H6',
@@ -136,6 +143,7 @@
                         @php
                             $pendingCount = \App\Models\BookingApproval::where('approver_id', auth()->id())
                                 ->where('status', 'waiting')
+                                ->whereHas('booking', fn($q) => $q->whereIn('status', ['pending', 'in_review']))
                                 ->count();
                         @endphp
                         @if ($pendingCount > 0)

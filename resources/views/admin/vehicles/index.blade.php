@@ -19,6 +19,8 @@
             </a>
         </div>
 
+        <x-flash-message />
+
         {{-- Status Cards --}}
         <div class="grid grid-cols-2 gap-3 sm:grid-cols-4 mb-5">
             @foreach ([['label' => 'Tersedia', 'key' => 'available', 'color' => 'emerald'], ['label' => 'Digunakan', 'key' => 'in_use', 'color' => 'amber'], ['label' => 'Perawatan', 'key' => 'maintenance', 'color' => 'red'], ['label' => 'Tidak Aktif', 'key' => 'inactive', 'color' => 'slate']] as $card)

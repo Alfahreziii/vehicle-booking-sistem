@@ -1,1 +1,20 @@
 @import "tailwindcss";
+
+/* Force pagination selalu light mode */
+nav[aria-label="Pagination Navigation"] {
+    color-scheme: light;
+}
+
+nav[aria-label="Pagination Navigation"] span,
+nav[aria-label="Pagination Navigation"] a,
+nav[aria-label="Pagination Navigation"] button {
+    background-color: white !important;
+    color: #374151 !important;
+    border-color: #e5e7eb !important;
+}
+
+nav[aria-label="Pagination Navigation"] [aria-current="page"] span {
+    background-color: #2563eb !important;
+    color: white !important;
+    border-color: #2563eb !important;
+}
