@@ -20,6 +20,8 @@ class BookingApproval extends Model
         'acted_at' => 'datetime',
     ];
 
+    // ── Relasi ─────────────────────────────────────────────
+
     public function booking(): BelongsTo
     {
         return $this->belongsTo(Booking::class);
@@ -29,6 +31,8 @@ class BookingApproval extends Model
     {
         return $this->belongsTo(User::class, 'approver_id');
     }
+
+    // ── Scope ──────────────────────────────────────────────
 
     public function scopeWaiting($query)
     {

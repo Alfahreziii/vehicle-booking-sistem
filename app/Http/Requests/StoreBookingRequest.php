@@ -1,5 +1,4 @@
 <?php
-// app/Http/Requests/StoreBookingRequest.php
 
 namespace App\Http\Requests;
 
@@ -10,6 +9,7 @@ class StoreBookingRequest extends FormRequest
 {
     public function authorize(): bool
     {
+        /** @var \App\Models\User $user */
         $user = Auth::user();
         return $user && $user->hasRole('admin');
     }

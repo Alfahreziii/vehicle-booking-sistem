@@ -1,5 +1,4 @@
 <?php
-// app/Exports/BookingExport.php
 
 namespace App\Exports;
 

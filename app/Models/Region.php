@@ -11,6 +11,9 @@ class Region extends Model
 
     protected $casts = ['is_active' => 'boolean'];
 
+
+    // ── Relasi ─────────────────────────────────────────────
+
     public function users(): HasMany
     {
         return $this->hasMany(User::class);
@@ -25,6 +28,8 @@ class Region extends Model
     {
         return $this->hasMany(Department::class);
     }
+
+    // ── Scope ──────────────────────────────────────────────
 
     public function scopeActive($query)
     {

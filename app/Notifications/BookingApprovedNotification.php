@@ -1,5 +1,4 @@
 <?php
-// app/Notifications/BookingApprovedNotification.php
 
 namespace App\Notifications;
 

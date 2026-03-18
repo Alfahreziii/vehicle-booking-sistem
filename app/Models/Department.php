@@ -12,6 +12,8 @@ class Department extends Model
 
     protected $casts = ['is_active' => 'boolean'];
 
+    // ── Relasi ─────────────────────────────────────────────
+
     public function region(): BelongsTo
     {
         return $this->belongsTo(Region::class);
@@ -21,6 +23,8 @@ class Department extends Model
     {
         return $this->hasMany(User::class);
     }
+
+    // ── Scope ──────────────────────────────────────────────
 
     public function scopeActive($query)
     {
